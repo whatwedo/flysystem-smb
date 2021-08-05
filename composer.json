@@ -1,6 +1,6 @@
 {
   "name": "whatwedo/flysystem-smb",
-  "description": "smb icewind filesystem adapter for Flysystem.",
+  "description": "smb icewind adapter for Flysystem.",
   "keywords": ["smb", "icewind", "flysystem", "filesystem", "storage", "file", "files"],
   "type": "MIT",
   "autoload": {
