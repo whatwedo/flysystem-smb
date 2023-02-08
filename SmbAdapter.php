@@ -2,8 +2,6 @@
 
 namespace whatwedo\FlysystemSmb;
 
-use Icewind\SMB\Exception\AlreadyExistsException;
-use Icewind\SMB\Exception\InvalidTypeException;
 use Icewind\SMB\Exception\NotFoundException;
 use Icewind\SMB\IFileInfo;
 use Icewind\SMB\IShare;
@@ -12,30 +10,19 @@ use League\Flysystem\Config;
 use League\Flysystem\DirectoryAttributes;
 use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemAdapter;
-use League\Flysystem\FilesystemException;
-use League\Flysystem\InvalidVisibilityProvided;
 use League\Flysystem\PathNormalizer;
 use League\Flysystem\PathPrefixer;
 use League\Flysystem\StorageAttributes;
-use League\Flysystem\SymbolicLinkEncountered;
-use League\Flysystem\UnableToCopyFile;
-use League\Flysystem\UnableToCreateDirectory;
-use League\Flysystem\UnableToDeleteDirectory;
-use League\Flysystem\UnableToDeleteFile;
-use League\Flysystem\UnableToMoveFile;
 use League\Flysystem\UnableToReadFile;
 use League\Flysystem\UnableToRetrieveMetadata;
-use League\Flysystem\UnableToWriteFile;
 use League\Flysystem\Visibility;
 use League\Flysystem\WhitespacePathNormalizer;
 use League\MimeTypeDetection\FinfoMimeTypeDetector;
 use League\MimeTypeDetection\MimeTypeDetector;
-use LogicException;
 use Generator;
 
 class SmbAdapter implements FilesystemAdapter
 {
-
     private IShare $share;
 
     protected ?string $pathPrefix = null;
@@ -59,6 +46,19 @@ class SmbAdapter implements FilesystemAdapter
 
         $this->setPathPrefix($prefix);
         $this->mimeTypeDetector = $mimeTypeDetector ?: new FinfoMimeTypeDetector();
+    }
+
+    public function directoryExists(string $path): bool
+    {
+        $location = $this->applyPathPrefix($path);
+
+        try {
+            $this->share->dir($location);
+        } catch (NotFoundException $e) {
+            return false;
+        }
+
+        return true;
     }
 
     public function fileExists(string $path): bool
@@ -167,11 +167,11 @@ class SmbAdapter implements FilesystemAdapter
     {
         $location = $this->applyPathPrefix($path);
         try {
-            $this->getMetadata($location);    
+            $this->getMetadata($location);
         } catch (\League\Flysystem\UnableToRetrieveMetadata $exception) {
             throw new \League\Flysystem\UnableToSetVisibility($path, 0);
         }
-        
+
 
         if ($visibility == Visibility::PRIVATE) {
             $this->share->setMode($location, FileInfo::MODE_HIDDEN + FileInfo::MODE_ARCHIVE);
@@ -214,7 +214,7 @@ class SmbAdapter implements FilesystemAdapter
                 throw UnableToRetrieveMetadata::mimeType($path, error_get_last()['message'] ?? '');
             }
         }
-        
+
         return new FileAttributes($path, null, null, null, $mimeType);
     }
 
@@ -236,9 +236,9 @@ class SmbAdapter implements FilesystemAdapter
     {
         $location = $this->applyPathPrefix($path);
         $location = $path;
-        
+
         $file = $this->share->stat($location);
-        
+
         if (!$file->isDirectory()) {
             return;
         }
@@ -407,7 +407,7 @@ class SmbAdapter implements FilesystemAdapter
         } catch (NotFoundException $e) {
             throw new UnableToRetrieveMetadata();
         }
-        
+
         return $this->createStorageAttribute($file);
     }
 

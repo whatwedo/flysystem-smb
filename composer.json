@@ -2,7 +2,7 @@
   "name": "whatwedo/flysystem-smb",
   "description": "smb icewind adapter for Flysystem.",
   "keywords": ["smb", "icewind", "flysystem", "filesystem", "storage", "file", "files"],
-  "type": "MIT",
+  "type": "library",
   "autoload": {
     "psr-4": {
       "whatwedo\\FlysystemSmb\\": ""
@@ -10,7 +10,7 @@
   },
   "require": {
     "php": "^7.2 || ^8.0",
-    "league/flysystem": "^2.0.0",
+    "league/flysystem": "^2.0|^3.0",
     "league/mime-type-detection": "^1.0.0",
     "icewind/smb": "^3.4"
   },
