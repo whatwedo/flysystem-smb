@@ -5,7 +5,7 @@
   "type": "library",
   "autoload": {
     "psr-4": {
-      "whatwedo\\FlysystemSmb\\": ""
+      "whatwedo\\FlysystemSmb\\": "src/"
     }
   },
   "require": {
@@ -20,5 +20,8 @@
       "name": "Maurizio Monticelli",
       "email": "maurizio@whatwedo.ch"
     }
-  ]
+  ],
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
+  }
 }

@@ -2,6 +2,7 @@
 
 namespace whatwedo\FlysystemSmb;
 
+use Generator;
 use Icewind\SMB\Exception\NotFoundException;
 use Icewind\SMB\IFileInfo;
 use Icewind\SMB\IShare;
@@ -19,7 +20,7 @@ use League\Flysystem\Visibility;
 use League\Flysystem\WhitespacePathNormalizer;
 use League\MimeTypeDetection\FinfoMimeTypeDetector;
 use League\MimeTypeDetection\MimeTypeDetector;
-use Generator;
+use whatwedo\FlysystemSmb\SplFileInfo;
 
 class SmbAdapter implements FilesystemAdapter
 {

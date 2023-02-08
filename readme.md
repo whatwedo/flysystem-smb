@@ -16,7 +16,7 @@ use League\Flysystem\Memory\MemoryAdapter;
 
 
 $serverFactory = new \Icewind\SMB\ServerFactory();
-$auth = new \Icewind\SMB\BasicAuth('medsuite', 'workgroup', 'medsuite');
+$auth = new \Icewind\SMB\BasicAuth('user', 'workgroup', 'password');
 $server = $serverFactory->createServer('localhost', $auth);
 
 $share = $server->getShare('Medsuite Share');
