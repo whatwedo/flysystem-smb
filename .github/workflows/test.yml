@@ -10,15 +10,15 @@ on:
       - main
       - develop
 
-permissions:
-  contents: read
-
 jobs:
   test:
 
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install smbclient
+        run: sudo apt-get install -y smbclient php-smbclient
+
       - uses: actions/checkout@v3
 
       - name: Validate composer.json and composer.lock
@@ -38,13 +38,21 @@ jobs:
       - name: Run test Coding-Styles
         run: composer run-script ecs
 
+      - name: create Shared Folder
+        run: mkdir sambaShares
+
       - name: Start Samba container
         run: |
-          
+                    
           docker rm -f samba > /dev/null 2>&1 || true
           docker run -d --name samba \
             -e "BROWSABLE=yes" \
             -v "$(pwd)/.github/config-test.yml:/data/config.yml:ro" \
+            -v "$(pwd)/sambaShares:/samba" \
+            -p "137:137/udp" \
+            -p "138:138/udp" \
+            -p "139:139/tcp" \ 
+            -p "445:445/tcp" \
             crazymax/samba:latest
 
       - name: Test Samba started
