@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 
 use Icewind\SMB\BasicAuth;
 use Icewind\SMB\ServerFactory;
@@ -8,7 +10,6 @@ use whatwedo\FlysystemSmb\SmbAdapter;
 
 class AdapterTest extends \PHPUnit\Framework\TestCase
 {
-
     public function testReadWrite()
     {
         $filesystem = $this->getFilesystem();

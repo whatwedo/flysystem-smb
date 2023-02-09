@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace whatwedo\FlysystemSmb;
 
-use Generator;
 use Icewind\SMB\Exception\NotFoundException;
 use Icewind\SMB\IFileInfo;
 use Icewind\SMB\IShare;
@@ -20,26 +21,26 @@ use League\Flysystem\Visibility;
 use League\Flysystem\WhitespacePathNormalizer;
 use League\MimeTypeDetection\FinfoMimeTypeDetector;
 use League\MimeTypeDetection\MimeTypeDetector;
-use whatwedo\FlysystemSmb\SplFileInfo;
 
 class SmbAdapter implements FilesystemAdapter
 {
-    private IShare $share;
-
     protected ?string $pathPrefix = null;
 
     protected string $pathSeparator = '/';
 
+    private IShare $share;
+
     private FinfoMimeTypeDetector $mimeTypeDetector;
+
     private PathPrefixer $pathPrefixer;
+
     private PathNormalizer $pathNormalizer;
 
     public function __construct(
         IShare $share,
         string $prefix = '/',
         MimeTypeDetector $mimeTypeDetector = null
-    )
-    {
+    ) {
         $this->share = $share;
 
         $this->pathNormalizer = new WhitespacePathNormalizer();
@@ -77,7 +78,6 @@ class SmbAdapter implements FilesystemAdapter
 
     public function write(string $path, string $contents, Config $config): void
     {
-
         $this->recursiveCreateDir($this->pathNormalizer->normalizePath(dirname($path)));
 
         $location = $this->applyPathPrefix($path);
@@ -147,7 +147,8 @@ class SmbAdapter implements FilesystemAdapter
         try {
             $this->getMetadata($location);
             $this->share->del($location);
-        } catch (\League\Flysystem\UnableToRetrieveMetadata $exception) {}
+        } catch (\League\Flysystem\UnableToRetrieveMetadata $exception) {
+        }
     }
 
     public function deleteDirectory(string $path): void
@@ -173,8 +174,7 @@ class SmbAdapter implements FilesystemAdapter
             throw new \League\Flysystem\UnableToSetVisibility($path, 0);
         }
 
-
-        if ($visibility == Visibility::PRIVATE) {
+        if ($visibility === Visibility::PRIVATE) {
             $this->share->setMode($location, FileInfo::MODE_HIDDEN + FileInfo::MODE_ARCHIVE);
         } else {
             $this->share->setMode($location, FileInfo::MODE_ARCHIVE);
@@ -183,7 +183,6 @@ class SmbAdapter implements FilesystemAdapter
 
     public function visibility(string $path): FileAttributes
     {
-
         $location = $this->applyPathPrefix($path);
 
         $fileInfo = $this->getMetadata($location);
@@ -205,15 +204,12 @@ class SmbAdapter implements FilesystemAdapter
 
         $mimeType = $this->mimeTypeDetector->detectMimeTypeFromFile(stream_get_contents($metadata));
 
-
-
         if ($mimeType === null) {
             // feka the test result ;-)
             if (str_ends_with($path, '.svg')) {
                 return new FileAttributes($path, null, null, null, 'image/svg');
-            } else {
-                throw UnableToRetrieveMetadata::mimeType($path, error_get_last()['message'] ?? '');
             }
+            throw UnableToRetrieveMetadata::mimeType($path, error_get_last()['message'] ?? '');
         }
 
         return new FileAttributes($path, null, null, null, $mimeType);
@@ -240,7 +236,7 @@ class SmbAdapter implements FilesystemAdapter
 
         $file = $this->share->stat($location);
 
-        if (!$file->isDirectory()) {
+        if (! $file->isDirectory()) {
             return;
         }
 
@@ -257,15 +253,15 @@ class SmbAdapter implements FilesystemAdapter
         }
 
         $listing->uasort(
-           function (StorageAttributes $a, StorageAttributes $b)  {
-               if ($a instanceof FileAttributes && $b instanceof DirectoryAttributes) {
-                   return -1;
-               }
-               if ($b instanceof FileAttributes && $a instanceof DirectoryAttributes) {
-                   return 1;
-               }
-               return substr_count($b->path(), '/') - substr_count($a->path(), '/');
-           }
+            function (StorageAttributes $a, StorageAttributes $b) {
+                if ($a instanceof FileAttributes && $b instanceof DirectoryAttributes) {
+                    return -1;
+                }
+                if ($b instanceof FileAttributes && $a instanceof DirectoryAttributes) {
+                    return 1;
+                }
+                return substr_count($b->path(), '/') - substr_count($a->path(), '/');
+            }
         );
 
         yield from $listing;
@@ -293,7 +289,7 @@ class SmbAdapter implements FilesystemAdapter
     {
         $response = $this->readStream($source);
 
-        if ($response === false || !is_resource($response)) {
+        if ($response === false || ! is_resource($response)) {
             return;
         }
 
@@ -342,6 +338,18 @@ class SmbAdapter implements FilesystemAdapter
         return substr($path, strlen($this->getPathPrefix()));
     }
 
+    public function getMetadata(string $path)
+    {
+        $location = $this->applyPathPrefix($path);
+
+        try {
+            $file = $this->share->stat($location);
+        } catch (NotFoundException $e) {
+            throw new UnableToRetrieveMetadata();
+        }
+
+        return $this->createStorageAttribute($file);
+    }
 
     protected function recursiveCreateDir(string $path)
     {
@@ -380,7 +388,6 @@ class SmbAdapter implements FilesystemAdapter
         return $file->isDirectory();
     }
 
-
     protected function deleteContents(string $path)
     {
         $contents = $this->listContents($path, true);
@@ -398,21 +405,6 @@ class SmbAdapter implements FilesystemAdapter
         }
     }
 
-
-    public function getMetadata(string $path)
-    {
-        $location = $this->applyPathPrefix($path);
-
-        try {
-            $file = $this->share->stat($location);
-        } catch (NotFoundException $e) {
-            throw new UnableToRetrieveMetadata();
-        }
-
-        return $this->createStorageAttribute($file);
-    }
-
-
     /**
      * Normalize the file info.
      */
@@ -421,10 +413,10 @@ class SmbAdapter implements FilesystemAdapter
         $normalized = [
             'type' => $file->isDirectory() ? 'dir' : 'file',
             'path' => ltrim($this->getFilePath($file), $this->pathSeparator),
-            'timestamp' => $file->getMTime()
+            'timestamp' => $file->getMTime(),
         ];
 
-        if (!$file->isDirectory()) {
+        if (! $file->isDirectory()) {
             $normalized['size'] = $file->getSize();
         }
 
@@ -447,28 +439,27 @@ class SmbAdapter implements FilesystemAdapter
             return new DirectoryAttributes(
                 $this->pathNormalizer->normalizePath($file->getPath()),
                 null,
-                $file->getMTime());
-        } else {
-            return new FileAttributes(
-                $this->pathNormalizer->normalizePath($file->getPath()),
-                $file->getSize(),
-                $file->isHidden() ? Visibility::PRIVATE : Visibility::PUBLIC,
                 $file->getMTime()
             );
         }
+        return new FileAttributes(
+            $this->pathNormalizer->normalizePath($file->getPath()),
+            $file->getSize(),
+            $file->isHidden() ? Visibility::PRIVATE : Visibility::PUBLIC,
+            $file->getMTime()
+        );
     }
 
-
-    private function listDirectory(IFileInfo $file, $deep = false): Generator
+    private function listDirectory(IFileInfo $file, $deep = false): \Generator
     {
         yield $file;
 
         foreach ($this->share->dir($file->getPath()) as $item) {
-            if (!$item->isDirectory()) {
+            if (! $item->isDirectory()) {
                 continue;
             }
             if ($deep) {
-//                yield $item;
+                //                yield $item;
                 yield from $this->listDirectory($item, $deep);
             }
         }
