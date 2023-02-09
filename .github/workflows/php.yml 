@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -35,6 +35,37 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
+    -
+      name: Start Samba container
+      run: |
+
+        docker rm -f samba > /dev/null 2>&1 || true
+        docker run -d --name samba \
+          -e "BROWSABLE=yes" \
+          -v "$(pwd)/.github/config-test.yml:/data/config.yml:ro" \
+          crazymax/samba:latest
+
+    -
+      name: Test Samba started
+      run: |
+        TIMEOUT=$((SECONDS + 150))
+        while read LOGLINE; do
+          echo ${LOGLINE}
+          if [[ ${LOGLINE} == *"started"* ]]; then
+            echo "🎉 Container up!"
+            break
+          fi
+          if [[ $SECONDS -gt ${TIMEOUT} ]]; then
+            >&2 echo "❌ Failed to run samba container"
+            exit 1
+          fi
+        done < <(docker logs -f samba 2>&1)
+        CONTAINER_STATUS=$(docker container inspect --format "{{.State.Status}}" samba)
+        if [[ ${CONTAINER_STATUS} != "running" ]]; then
+          >&2 echo "❌ Container samba returned status '$CONTAINER_STATUS'"
+          exit 1
+        fi
+        echo
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
