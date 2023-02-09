@@ -64,12 +64,6 @@ jobs:
             exit 1
           fi
           echo
-      - name: PHPUnit for PHP 8
-        # You may pin to the exact commit or the version.
-        # uses: chindit/actions-phpunit@3008f2dbdfc887f862346ec666e4c856c710785e
-        uses: chindit/actions-phpunit@1.0.0
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
 
-    # - name: Run test suite
-    #   run: composer run-script test
+      - name: Run test suite
+        run: composer run-script test
