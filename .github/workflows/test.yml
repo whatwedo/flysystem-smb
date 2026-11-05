@@ -1,0 +1,75 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install smbclient
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y smbclient php-smbclient
+
+      - uses: actions/checkout@v7
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v6
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run test Coding-Styles
+        run: composer run-script ecs
+
+      - name: create Shared Folder
+        run: |
+          mkdir -p sambaShares/dde sambaShares/public
+          chmod -R 777 sambaShares
+
+      - name: Start Samba container
+        run: |
+          docker rm -f samba > /dev/null 2>&1 || true
+          docker run -d --name samba \
+            -e "BROWSABLE=yes" \
+            -v "$(pwd)/.github/config.yml:/data/config.yml:ro" \
+            -v "$(pwd)/sambaShares:/samba" \
+            -p "137:137/udp" \
+            -p "138:138/udp" \
+            -p "139:139/tcp" \
+            -p "445:445/tcp" \
+            crazymax/samba:latest
+
+      - name: Wait for Samba
+        run: |
+          for i in $(seq 1 30); do
+            if smbclient //localhost/dde -U dde%mypassword -c 'ls' > /dev/null 2>&1; then
+              echo "Samba is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs samba
+          >&2 echo "Samba did not become ready"
+          exit 1
+
+      - name: Run test suite
+        run: composer run-script test

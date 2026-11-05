@@ -11,6 +11,7 @@ return static function (ECSConfig $config): void {
     $config->paths(
         [
             __DIR__ . '/src',
+            __DIR__ . '/tests',
         ]
     );
 
