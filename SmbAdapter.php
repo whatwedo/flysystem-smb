@@ -29,14 +29,14 @@ class SmbAdapter implements FilesystemAdapter
 
     protected string $pathSeparator = '/';
 
-    private FinfoMimeTypeDetector $mimeTypeDetector;
+    private MimeTypeDetector $mimeTypeDetector;
     private PathPrefixer $pathPrefixer;
     private PathNormalizer $pathNormalizer;
 
     public function __construct(
         IShare $share,
         string $prefix = '/',
-        MimeTypeDetector $mimeTypeDetector = null
+        ?MimeTypeDetector $mimeTypeDetector = null
     )
     {
         $this->share = $share;
